@@ -52,36 +52,17 @@ In case the Elves get hungry and need extra snacks, they need to know which Elf 
 they'd like to know how many Calories are being carried by the Elf carrying the most Calories.
 In the example above, this is 24000 (carried by the fourth Elf).
 
+--- Part One ---
 Find the Elf carrying the most Calories. How many total Calories is that Elf carrying?
-"""
-import logging
 
-logging.basicConfig(level=logging.DEBUG)
-log = logging.getLogger()
 
-with open("input.txt", 'r') as f:
-    calories_data = f.read().split("\n\n")
-
-log.debug(f"{calories_data=}")
-
-elves = [[int(calories) for calories in elf]
-         for elf in map(str.split, calories_data)]
-
-log.debug(f"{elves=}")
-
-total_calories_per_elf = [sum(elf) for elf in elves]
-log.debug(f"{total_calories_per_elf}")
-
-log.info(f"Elf carrying the most calories: {max(total_calories_per_elf)}")
-
-"""
 --- Part Two ---
 By the time you calculate the answer to the Elves' question,
 they've already realized that the Elf carrying the most Calories of food might eventually run out of snacks.
 
-To avoid this unacceptable situation, 
+To avoid this unacceptable situation,
 the Elves would instead like to know the total Calories carried by the top three Elves
-carrying the most Calories. 
+carrying the most Calories.
 That way, even if one of those Elves runs out of snacks, they still have two backups.
 
 In the example above, the top three Elves are the fourth Elf (with 24000 Calories),
@@ -91,9 +72,44 @@ The sum of the Calories carried by these three elves is 45000.
 
 Find the top three Elves carrying the most Calories. How many Calories are those Elves carrying in total?
 """
-elves_sorted_by_largest_amount_of_calories = sorted(total_calories_per_elf, reverse=True)
-top = 3
-log.debug(f"{elves_sorted_by_largest_amount_of_calories=}")
-top_three_elves = elves_sorted_by_largest_amount_of_calories[:top]
-log.info(f"{top_three_elves=}")
-log.info(f"{sum(top_three_elves)=}")
+import logging
+from dataclasses import dataclass, field
+from pathlib import Path
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger()
+
+#TODO Add sorting index strategy
+@dataclass(order=True)
+class Snack:
+    # sort_index: int = field(init=False, repr=False)
+    calories: int
+
+
+@dataclass(order=True)
+class Elf:
+    # sort_index: int = field(init=False, repr=False)
+    snacks: list[Snack] = field(default_factory=list)
+
+
+def transform_chunk_by_applying(function: callable, onto: str, split_by=None):
+    return map(function, onto.split(split_by))
+
+
+def read_elves_from_file(path: Path) -> list[Elf]:
+    with open(path.name, 'r') as f:
+        chunks = f.read().split('\n\n')
+    transformed_chunks = [transform_chunk_by_applying(int, onto=chunk) for chunk in chunks]
+    return [Elf([Snack(calories) for calories in chunk]) for chunk in transformed_chunks]
+
+
+if __name__ == '__main__':
+    path = Path("input.txt")
+    elves = read_elves_from_file(path)
+    print(Snack(3) > Snack(2))
+    print(len(elves))
+    logger.info(elves)
+    for elf in elves:
+        logger.info(type(elf))
+        logger.info(sum(elf.snacks))
+
