@@ -46,9 +46,7 @@ with open("input.txt", 'r') as f:
     calories_data = f.read().split("\n\n")
 
 log.debug(f"{calories_data=}")
-log.debug(calories_data)
 
-total_calories = 0
 elves = [[int(calories) for calories in map(str.strip, elf)]
          for elf in map(str.split, calories_data)]
 
