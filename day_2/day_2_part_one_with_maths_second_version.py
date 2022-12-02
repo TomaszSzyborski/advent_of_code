@@ -46,51 +46,37 @@ What would your total score be if everything goes exactly according to your stra
 
 """
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger()
 
-me = "XYZ"
-elf = "ABC"
 
-#right answer for my data set is 12645
-@dataclass
+# right answer for my data set is 12645
+@dataclass(frozen=True)
 class Round:
     elf_choice: str
     my_choice: str
+    _my_choices: str = field(init=False, repr=False, default="XYZ")
+    _elf_choices: str = field(init=False, repr=False, default="ABC")
 
     def calculate_result(self) -> int:
         """
         Calculates the result of the round.
         :return int points earned in the round
         """
-
-        total_points_in_the_round = 0
-        my_points = me.index(self.my_choice) + 1
-        elf_points = elf.index(self.elf_choice) + 1
-        total_points_in_the_round += my_points
-        if my_points == elf_points:
-            total_points_in_the_round += 3
-            log.debug("Draw")
-        elif my_points - elf_points in [-2, 1]:
-            total_points_in_the_round += 6
-            log.debug("I won")
-        else:
-            log.debug("I lost")
-        log.debug(self)
-        log.debug(f"points earned in round: {total_points_in_the_round}")
-        log.debug("#" * 80)
-        return total_points_in_the_round
+        my_points = self._my_choices.index(self.my_choice) + 1
+        elf_points = self._elf_choices.index(self.elf_choice) + 1
+        return my_points + [3, 6, 0][my_points - elf_points]
 
 
-# puzzle_input = "test_input.txt"
-puzzle_input = "puzzle_input.txt"
-with open(puzzle_input, 'r') as f:
-    lines = f.read().splitlines()
-    log.debug(lines)
+if __name__ == '__main__':
+    # puzzle_input = "test_input.txt"
+    puzzle_input = "puzzle_input.txt"
+    with open(puzzle_input, 'r') as f:
+        lines = f.read().splitlines()
 
-rounds = [Round(*line.split()) for line in lines]
+    rounds = [Round(*line.split()) for line in lines]
 
-points_earned = sum([r.calculate_result() for r in rounds])
-log.info(f"{points_earned=}")
+    points_earned = sum([r.calculate_result() for r in rounds])
+    log.info(f"{points_earned=}")

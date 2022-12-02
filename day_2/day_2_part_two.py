@@ -38,6 +38,7 @@ me_playing_rock_points = 1
 me_playing_paper_points = 2
 me_playing_scissors_points = 3
 
+
 @dataclass
 class Round:
     elf_choice: str
