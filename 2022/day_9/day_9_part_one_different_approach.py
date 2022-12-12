@@ -265,6 +265,15 @@ from dataclasses import dataclass
 from enum import Enum
 
 
+def sign(number: int):
+    if number == 0:
+        return 0
+    elif number > 0:
+        return 1
+    else:
+        return -1
+
+
 @dataclass(eq=True, frozen=True)
 class Knot:
     x: int
@@ -285,6 +294,15 @@ class Rope:
     def __init__(self, knot_count: int):
         self.knots = [Knot(0, 0)] * knot_count
         self.tail_history = []
+
+    def move(self, direction: Direction):
+        self.knots[0] += direction.value
+        for index in range(1, len(self.knots)):
+            horizontal_difference = self.knots[index - 1].x - self.knots[index].x
+            vertical_difference = self.knots[index - 1].y - self.knots[index].y
+            if abs(horizontal_difference) > 1 or abs(vertical_difference) > 1:
+                self.knots[index] += Knot(sign(horizontal_difference), sign(vertical_difference))
+            self.tail_history.append(self.knots[-1])
 
 
 @dataclass
@@ -316,15 +334,6 @@ def process_data_to_planck_rope_movement(raw_data_lines):
     return planck_movement_list
 
 
-def sign(number: int):
-    if number == 0:
-        return 0
-    elif number > 0:
-        return 1
-    else:
-        return -1
-
-
 if __name__ == '__main__':
     """
     for test input answer should be 13 and rope length 2
@@ -336,13 +345,6 @@ if __name__ == '__main__':
     movements = process_data_to_planck_rope_movement(raw_data)
     rope = Rope(2)
     for movement in movements:
-        print(movement)
         for _ in range(movement.multiplier):
-            rope.knots[0] += movement.direction.value
-            for index in range(1, len(rope.knots)):
-                horizontal_difference = rope.knots[index - 1].x - rope.knots[index].x
-                vertical_difference = rope.knots[index - 1].y - rope.knots[index].y
-                if abs(horizontal_difference) > 1 or abs(vertical_difference) > 1:
-                    rope.knots[index] += Knot(sign(horizontal_difference), sign(vertical_difference))
-                rope.tail_history.append(rope.knots[-1])
+            rope.move(movement.direction)
     print(len(set(rope.tail_history)))
