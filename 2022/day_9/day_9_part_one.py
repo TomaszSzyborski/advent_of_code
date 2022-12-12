@@ -288,11 +288,20 @@ class Rope:
         self._tail_history: list[Point] = [self._tail]
 
     def move(self, direction: Direction):
-        #TODO debug head elasticity
-        self._head += direction.value
         new_x = self._tail.x
         new_y = self._tail.y
+        old_head = self._head
+        self._head += direction.value
 
+        #diagonal elasticity
+        if abs(self._head.x - self._tail.x) > 1 and abs(self._head.y - self._tail.y) == 1:
+            new_x = old_head.x
+            new_y = old_head.y
+        if abs(self._head.y - self._tail.y) > 1 and abs(self._head.x - self._tail.x) == 1:
+            new_x = old_head.x
+            new_y = old_head.y
+
+        #perpendicular elasticity
         if abs(self._head.x - self._tail.x) > 1:
             new_x = self._tail.x + direction.value.x
         if abs(self._head.y - self._tail.y) > 1:
@@ -336,3 +345,14 @@ def process_data_to_planck_rope_movement(raw_data_lines):
             int(raw_multiplier)
         ))
     return planck_movement_list
+
+if __name__ == '__main__':
+    raw_data = read_data_file("puzzle_input.txt")
+    movements = process_data_to_planck_rope_movement(raw_data)
+    rope = Rope()
+    for movement in movements:
+        print(movement)
+        for _ in range(movement.multiplier):
+            rope.move(movement.direction)
+
+    print(rope.calculate_tail_visited_spaces())
