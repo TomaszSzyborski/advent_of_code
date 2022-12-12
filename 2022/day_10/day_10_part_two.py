@@ -189,7 +189,12 @@ if __name__ == '__main__':
     instructions = process_cathode_signal_data(read_data_file('puzzle_input.txt'))
     signal_strengths = process_instructions(instructions)
     cycles_under_interest = [0, 40, 80, 120, 160, 200, 240]
-    # print(sum([cycle * value for cycle, value in zip(cycles_under_interest, processed_data)]))
     for i in range(1, len(cycles_under_interest)):
         row = list(signal_strengths.values())[cycles_under_interest[i-1]:cycles_under_interest[i]]
-        print(''.join(['###' if value > 0 else '...' for value in row]))
+        print(f"Cycle {cycles_under_interest[i-1]}-{cycles_under_interest[i]-1}: {row}")
+    for i in range(1, len(cycles_under_interest)):
+        row = list(signal_strengths.values())[cycles_under_interest[i-1]:cycles_under_interest[i]]
+        printable_row =''.join(["#" if index-1 <= item <= index+1 else "." for index, item in enumerate(row)])
+        print(printable_row)
+
+        #RIGHT ANSWER: EKRHEPUZ
