@@ -40,3 +40,6 @@ for line in data:
     results.append(int(found_number))
 
 print(sum(results))
+
+#oneliner
+print(sum([int(get_first_number(line) + get_first_number(line[::-1])) for line in data]))
