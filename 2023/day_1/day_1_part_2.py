@@ -19,11 +19,13 @@ import dataclasses
 import logging
 import os
 
-mode = 'test'
+# mode = 'test'
+mode = 'production'
 if mode == 'test':
     logging.basicConfig(encoding='utf-8', level=os.getenv("loglevel", logging.DEBUG))
 else:
     logging.basicConfig(encoding='utf-8', level=logging.INFO)
+
 
 @dataclasses.dataclass
 class Word:
@@ -58,7 +60,8 @@ def find_word(text: str, word: str, last: bool = False) -> int:
         return first_word_index if first_word_index != -1 else None
 
 
-with open("test.txt") as f:
+file_name = "test.txt" if mode == 'test' else "input_part_1.txt"
+with open(file_name) as f:
     data: list[str] = f.read().split('\n')
 
 spelled_out = [
@@ -73,7 +76,8 @@ for line_number, line in enumerate(data):
     for word in spelled_out:
         first_index = find_word(line, word)
         last_index = find_word(line, word, True)
-        if any([first_index, last_index]):
+        logging.debug(f"{word=}: {first_index=}, {last_index=}")
+        if first_index is not None and last_index is not None:
             spelled_out_indexes[word] = Word(word, first_index, last_index)
     logging.debug(f"{spelled_out_indexes=}")
 
@@ -88,7 +92,8 @@ for line_number, line in enumerate(data):
 
         first_numeric_number = get_first_number(first_chunk)
         last_numeric_number = get_first_number(last_chunk[::-1])
-        first_part = first_numeric_number if first_numeric_number else spelled_out.index(min_found_spelled_word.word) + 1
+        first_part = first_numeric_number if first_numeric_number else spelled_out.index(
+            min_found_spelled_word.word) + 1
         last_part = last_numeric_number if last_numeric_number else spelled_out.index(max_found_spelled_word.word) + 1
         found_number = f"{first_part}{last_part}"
         logging.debug(f"WITH SPELLED OUT WORDS: {found_number=}")
@@ -101,32 +106,3 @@ if __name__ == '__main__':
     logging.info(sum(results))
     if mode == 'test':
         assert sum(results) == 281
-
-"""
-DEBUG:root:line_number=992
-DEBUG:root:line='bnjpqcqdzmeight2gtjhqeight'
-DEBUG:root:{'one': -1, 'two': -1, 'three': -1, 'four': -1, 'five': -1, 'six': -1, 'seven': -1, 'eight': 10, 'nine': -1}
-INFO:root:spelled_out_indexes={'eight': 10}
-DEBUG:root:line='bnjpqcqdzmeight2gtjhqeight'
-DEBUG:root:Min word: eight
-DEBUG:root:Max word: eight
-DEBUG:root:Min index : 10
-DEBUG:root:Max index: 10
-DEBUG:root:First found numeric number : None
-DEBUG:root:Last found numeric number: 2
-DEBUG:root:First number data to combine for result: 8
-DEBUG:root:Last number data to combine for result: 2
-DEBUG:root:WITH SPELLED OUT WORDS: found_number='82'
-"""
-"""
-DEBUG:root:line='five3oneonefrvnbnnlz'
-DEBUG:root:Min word: one
-DEBUG:root:Max word: one
-DEBUG:root:Min index : [5, 8]
-DEBUG:root:Max index: [5, 8]
-DEBUG:root:First found numeric number : 3
-DEBUG:root:Last found numeric number: None
-DEBUG:root:First number data to combine for result: 3
-DEBUG:root:Last number data to combine for result: 1
-DEBUG:root:WITH SPELLED OUT WORDS: found_number='31'
-"""
