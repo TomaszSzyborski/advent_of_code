@@ -51,6 +51,7 @@ from dataclasses import dataclass
 import os
 import re
 from enum import StrEnum
+from typing import Self
 
 mode = 'test'
 # mode = 'production'
@@ -86,14 +87,10 @@ class Ball:
 class GameSet:
     balls: dict[Colour, Ball]
 
-    def __gt__(self, other):
-        logging.debug(f"GT {self=}")
-        logging.debug(f"GT {other=}")
-        for c in self.balls.keys():
-            if self.balls.get(c).quantity > other.balls.get(c).quantity:
-                logging.debug(f"GT false")
+    def contains(self, other: Self):
+        for k, v in other.balls.items():
+            if self.balls.get(k).quantity < v.quantity:
                 return False
-        logging.debug(f"GT true")
         return True
 
 
@@ -124,14 +121,12 @@ def strip_game_prefixes(games: list):
 
 
 def games_valid(l: list, master_set):
-    valid = False
     for game_set in l:
         logging.debug(f"{game_set=}")
         logging.debug(f"{master_set=}")
-        if game_set > master_set:
-            valid = True
-            break
-    return valid
+        if not master_set.contains(game_set):
+            return False
+    return True
 
 
 if __name__ == '__main__':
@@ -142,6 +137,7 @@ if __name__ == '__main__':
     valid_games = []
     for game in games:
         logging.debug(game)
+        logging.debug(game.game_id)
         if games_valid(game.game_sets, master_set):
             valid_games.append(game.game_id)
     logging.info(valid_games)
