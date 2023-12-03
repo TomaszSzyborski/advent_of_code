@@ -19,7 +19,27 @@ import dataclasses
 import logging
 import os
 
-logging.basicConfig(encoding='utf-8', level=os.getenv("loglevel", logging.DEBUG))
+mode = 'test'
+if mode == 'test':
+    logging.basicConfig(encoding='utf-8', level=os.getenv("loglevel", logging.DEBUG))
+else:
+    logging.basicConfig(encoding='utf-8', level=logging.INFO)
+
+@dataclasses.dataclass
+class Word:
+    word: str
+    first_index: int
+    last_index: int
+
+    def __post_init__(self):
+        self.first_index = None if self.first_index == -1 else self.first_index
+        self.last_index = None if self.last_index == -1 else self.last_index
+
+    def __lt__(self, other):
+        return self.first_index is not None and self.first_index < other.first_index
+
+    def __gt__(self, other):
+        return self.last_index is not None and self.last_index > other.last_index
 
 
 def get_first_number(text: str) -> str | None:
@@ -38,7 +58,7 @@ def find_word(text: str, word: str, last: bool = False) -> int:
         return first_word_index if first_word_index != -1 else None
 
 
-with open("input_part_1.txt") as f:
+with open("test.txt") as f:
     data: list[str] = f.read().split('\n')
 
 spelled_out = [
@@ -54,39 +74,34 @@ for line_number, line in enumerate(data):
         first_index = find_word(line, word)
         last_index = find_word(line, word, True)
         if any([first_index, last_index]):
-            spelled_out_indexes[word] = [i for i in [first_index, last_index] if i is not None]
-    logging.debug(spelled_out_indexes)
+            spelled_out_indexes[word] = Word(word, first_index, last_index)
+    logging.debug(f"{spelled_out_indexes=}")
 
     if spelled_out_indexes:
-        logging.debug(f"{line=}")
-        first_spelled_word = min(spelled_out_indexes, key=spelled_out_indexes.get)
-        last_spelled_word = max(spelled_out_indexes, key=spelled_out_indexes.get)
-        logging.debug(f"Min word: {first_spelled_word}")
-        logging.debug(f"Max word: {last_spelled_word}")
-        first_found_spelled_word_index = spelled_out_indexes[first_spelled_word]
-        last_found_spelled_word_index = spelled_out_indexes[last_spelled_word]
-        logging.debug(f"Min index : {first_found_spelled_word_index}")
-        logging.debug(f"Max index: {last_found_spelled_word_index}")
+        min_found_spelled_word = min(spelled_out_indexes.values())
+        max_found_spelled_word = max(spelled_out_indexes.values())
+        logging.debug(f"{min_found_spelled_word=}")
+        logging.debug(f"{max_found_spelled_word=}")
 
-        f = get_first_number(line[:first_found_spelled_word_index[0]])
-        l = get_first_number(line[last_found_spelled_word_index[1]:][::-1])
-        logging.debug(f"First found numeric number : {f}")
-        logging.debug(f"Last found numeric number: {l}")
+        first_chunk = line[:min_found_spelled_word.first_index]
+        last_chunk = line[max_found_spelled_word.last_index:]
 
-        first = f if f is not None else spelled_out.index(first_spelled_word) + 1
-        last = l if l is not None else spelled_out.index(last_spelled_word) + 1
-        logging.debug(f"First number data to combine for result: {first}")
-        logging.debug(f"Last number data to combine for result: {last}")
-
-        found_number = f"{first}{last}"
+        first_numeric_number = get_first_number(first_chunk)
+        last_numeric_number = get_first_number(last_chunk[::-1])
+        first_part = first_numeric_number if first_numeric_number else spelled_out.index(min_found_spelled_word.word) + 1
+        last_part = last_numeric_number if last_numeric_number else spelled_out.index(max_found_spelled_word.word) + 1
+        found_number = f"{first_part}{last_part}"
         logging.debug(f"WITH SPELLED OUT WORDS: {found_number=}")
-        results.append(int(found_number))
     else:
         found_number = f"{get_first_number(line)}{get_first_number(line[::-1])}"
         logging.debug(f"NO SPELLED OUT WORDS: {found_number=}")
-        results.append(int(found_number))
+    results.append(int(found_number))
 
-print(sum(results))
+if __name__ == '__main__':
+    logging.info(sum(results))
+    if mode == 'test':
+        assert sum(results) == 281
+
 """
 DEBUG:root:line_number=992
 DEBUG:root:line='bnjpqcqdzmeight2gtjhqeight'
