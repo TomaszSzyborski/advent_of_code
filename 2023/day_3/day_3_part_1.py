@@ -33,6 +33,8 @@ import string
 from dataclasses import dataclass
 import os
 from typing import Self
+import math
+from collections import defaultdict
 
 # mode = 'test'
 mode = 'production'
@@ -46,17 +48,7 @@ with open(file_name) as f:
     data = f.read().split('\n')
 
 
-def get_numbers_from(text: str, reverse=False) -> str | None:
-    numbers = ""
-    for letter in text:
-        if letter.isdigit():
-            numbers += letter
-        else:
-            break
-    return numbers[::-1] if reverse else numbers
-
-
-@dataclass
+@dataclass(eq=True, frozen=True)
 class Point:
     x: int
     y: int
@@ -65,117 +57,84 @@ class Point:
         return Point(self.x + other.x, self.y + other.y)
 
 
-def find_symbols(lines: list[str]) -> list[Point]:
-    symbols_placement: list[Point] = []
-    for line_index, line in enumerate(lines):
-        for symbol_index, character in enumerate(line):
-            if character not in f"{string.digits}.":
-                symbols_placement.append(Point(symbol_index, line_index))
-    logging.debug(symbols_placement)
-    return symbols_placement
+symbols = [
+    Point(x, y)
+    for y, line in enumerate(data)
+    for x, character in enumerate(line)
+    if not character.isdigit() and character != "."
+]
+
+surroundings = (
+    Point(-1, -1),  # NW
+    Point(0, -1),  # N
+    Point(1, -1),  # NE
+    Point(-1, 0),  # W
+    Point(1, 0),  # E
+    Point(-1, 1),  # SW
+    Point(0, 1),  # S
+    Point(1, 1),  # SE
+)
+
+symbols_with_numeric_neighbours = defaultdict(list)
+symbol_neighbour_gears = defaultdict(list)
+
+for point in symbols:
+    symbols_with_numeric_neighbours[point].extend(
+        [
+            point + offset_point
+            for offset_point in surroundings
+            if data[point.y + offset_point.y][point.x + offset_point.x].isdigit()
+        ]
+    )
 
 
-def get_symbol_from_map(map: list[str], point: Point, offset_point: Point = Point(0, 0)):
-    logging.debug(f"{map=}")
-    logging.debug(f"{point=}")
-    logging.debug(f"{offset_point=}")
-    check_point = point + offset_point
-    if any([check_point.x < 0,
-            check_point.x > len(map[0]),
-            check_point.y < 0,
-            check_point.y > len(map),
-            ]):
-        raise ValueError("Point outside of the map")
-
-    check_point_value = map[check_point.y][check_point.x]
-    logging.debug(f"{check_point_value=}")
-    return check_point_value
-
-
-def check_for_numbers(map: list[str], point: Point, offset_point: Point):
-    try:
-        check_point_value = get_symbol_from_map(map, point, offset_point)
-        logging.debug(f"{check_point_value=}: {check_point_value.isnumeric()=}")
-        return check_point_value.isnumeric()
-    except ValueError:
-        return False
-
-
-def get_chunk_from_map(map: list[str], point: Point, offset_point: Point, max_size_of_data_chunk: int,
-                       direction: str = None):
-    selected_line = map[point.y + offset_point.y]
-    logging.info(f"{selected_line}")
-    logging.info(f"{point.x=} {offset_point.x=}")
-    if direction == "left":
-        selected_points = selected_line[point.x - max_size_of_data_chunk: point.x + 1]
-    elif direction == "right":
-        selected_points = selected_line[point.x: point.x + max_size_of_data_chunk+1]
-    else:
-        selected_points = [selected_line[point.x + offset_point.x]]
-    logging.info(f"{direction} => {selected_points=}")
-    numeric_value = int(''.join([s for s in selected_points if s.isnumeric()]))
-    logging.info(f"{direction} => {numeric_value=}")
-    return numeric_value
-
-
-def calculate_result(data: list[str]):
-    max_number_size = 3
-    symbol_placement = find_symbols(data)
+def solve_q1():
     parts = []
-    for i, symbol in enumerate(symbol_placement):
-        logging.info(f"{i} {symbol} {get_symbol_from_map(data, symbol, Point(0, 0))}")
-        left_up = check_for_numbers(data, symbol, Point(-1, -1))  # LEFT UP
-        mid_up = check_for_numbers(data, symbol, Point(0, -1))  # STILL UP
-        right_up = check_for_numbers(data, symbol, Point(1, -1))  # RIGHT UP
-        if left_up and not mid_up:
-            parts.append(get_chunk_from_map(data, symbol, Point(-1, -1), max_number_size, "left"))
-        if left_up and mid_up and not right_up:
-            parts.append(get_chunk_from_map(data, symbol, Point(0, -1), max_number_size, "left"))
-        if left_up and mid_up and right_up:
-            a = get_chunk_from_map(data, symbol, Point(-1, -1), 1)
-            b = get_chunk_from_map(data, symbol, Point(0, -1), 1)
-            c = get_chunk_from_map(data, symbol, Point(1, -1), 1)
-            logging.info(f"MID TOP {int(f'{a}{b}{c}')}")
-            parts.append(int(f"{a}{b}{c}"))
-        if not left_up and mid_up and right_up:
-            parts.append(get_chunk_from_map(data, symbol, Point(0, -1), max_number_size, "right"))
-        if not left_up and not mid_up and right_up:
-            parts.append(get_chunk_from_map(data, symbol, Point(1, -1), max_number_size, "right"))
+    visited = set()
+    max_chars_in_line = len(data[0])
 
-        left = check_for_numbers(data, symbol, Point(-1, 0))  # LEFT STILL
-        if left:
-            parts.append(get_chunk_from_map(data, symbol, Point(-1, 0), max_number_size, "left"))
-        left_down = check_for_numbers(data, symbol, Point(-1, 1))  # LEFT DOWN
-        mid_down = check_for_numbers(data, symbol, Point(0, 1))  # STILL DOWN
-        right_down = check_for_numbers(data, symbol, Point(1, 1))  # RIGHT DOWN
-        if left_down and not mid_down:
-            parts.append(get_chunk_from_map(data, symbol, Point(-1, 1), max_number_size, "left"))
-        if left_down and mid_down and not right_down:
-            parts.append(get_chunk_from_map(data, symbol, Point(0, 1), max_number_size, "left"))
-        if left_down and mid_down and right_down:
-            a = get_chunk_from_map(data, symbol, Point(-1, 1), 1)
-            b = get_chunk_from_map(data, symbol, Point(0, 1), 1)
-            c = get_chunk_from_map(data, symbol, Point(1, 1), 1)
-            parts.append(int(f"{a}{b}{c}"))
-        if not left_down and mid_down and right_down:
-            parts.append(get_chunk_from_map(data, symbol, Point(0, 1), max_number_size, "right"))
-        if not left_down and not mid_down and right_down:
-            parts.append(get_chunk_from_map(data, symbol, Point(1, 1), max_number_size, "right"))
+    for point, neighbours in symbols_with_numeric_neighbours.items():
+        for point in neighbours:
+            if point in visited:
+                continue
 
-        right = check_for_numbers(data, symbol, Point(1, 0))  # RIGHT STILL
-        if right:
-            parts.append(get_chunk_from_map(data, symbol, Point(1, 0), max_number_size, "right"))
+            start_x, end_x = point.x, point.x
 
-    logging.debug(f"{parts=}")
+            while data[point.y][start_x].isdigit():
+                visited.add(Point(start_x, point.y))
+                start_x += -1
+
+            while end_x < max_chars_in_line and data[point.y][end_x].isdigit():
+                visited.add(Point(end_x, point.y))
+                end_x += 1
+
+            num = int(data[point.y][start_x+1: end_x])
+            parts.append(num)
+            symbol_neighbour_gears[point].append(num)
+    if mode == 'test':
+        assert sum(parts) == 4361
+    else:
+        assert sum(parts) == 539713
     return sum(parts)
 
 
-if __name__ == '__main__':
-    result = calculate_result(data)
-    print(result)
+def solve_q2():
+    stars = [p for p in symbols if data[p.x][p.y] == "*"]
+
+    gears = [
+        [g for g in symbol_neighbour_gears[point]]
+        for point in stars
+        if len(symbol_neighbour_gears[point]) == 2
+    ]
+    power_sum = sum(list(map(math.prod, gears)))
+
     if mode == 'test':
-        assert result == 4361, f"{result=}"
+        assert power_sum == 84159075, power_sum
     else:
-        assert result == 444598, f"{result=}" ## 444598 is too small
-        # 456506 - źle
-        # 533476 źle
+        assert power_sum == 84159075, power_sum
+
+    return power_sum
+
+
+print(f"Q1: {solve_q1()}")
+print(f"Q2: {solve_q2()}")
