@@ -30,10 +30,12 @@ Process all of the original and copied scratchcards until no more scratchcards a
 
 """
 import copy
+import functools
 import logging
 import string
 from dataclasses import dataclass
 import os
+from functools import cache
 from typing import Self
 import math
 from collections import defaultdict, Counter
@@ -50,25 +52,25 @@ with open(file_name) as f:
     data = f.read().split('\n')
 
 
-@dataclass
+@dataclass(eq=True, frozen=True)
 class Game:
     game_number: int
-    winning_numbers: list
-    scratched_numbers: list
+    winning_numbers: tuple
+    scratched_numbers: tuple
 
 
-def clean_the_data(list_of_cards) -> list[Game]:
+def clean_the_data(list_of_cards) -> tuple[Game]:
     clean_data = []
     for game_number, scratch_card in enumerate(list_of_cards, start=1):
         logging.info(f"{scratch_card=}")
         winning, your = scratch_card.split("|")
         winning = winning[str(winning.strip()).index(":") + 1:]
-        winning_list = [w.strip() for w in winning.split(" ") if w]
-        your_list = [y.strip() for y in your.split(" ") if y]
+        winning_list = tuple([w.strip() for w in winning.split(" ") if w])
+        your_list = tuple([y.strip() for y in your.split(" ") if y])
         logging.info(f"{winning_list=}")
         logging.info(f"{your_list=}")
         clean_data.append(Game(game_number, winning_list, your_list))
-    return clean_data
+    return tuple(clean_data)
 
 
 def solve():
@@ -81,25 +83,43 @@ def solve():
     return points
 
 
+@dataclass(eq=True, frozen=True)
+class GoldenDataSet:
+    data: tuple
+
+
+
+
+
 def solve_2():
     cleaned_data = clean_the_data(data)
-    original = copy.deepcopy(cleaned_data)
+    original: GoldenDataSet = GoldenDataSet(tuple(cleaned_data))
+
+    @functools.lru_cache()
+    # @cache
+    def find_copies_in_data(game: Game):
+        found_numbers = len(tuple([n for n in game.scratched_numbers if n in game.winning_numbers]))
+        logging.debug(f"{game.game_number=} {found_numbers=}")
+        winner = [game.game_number]
+        copies = ()
+        if found_numbers > 0:
+            copies = tuple([original.data[game.game_number + i - 1] for i in range(1, found_numbers + 1)])
+        return tuple(winner), tuple(copies)
+
     winners = []
     passes = 0
+    # todo use with reduce and recursion
+    # todo use cache function
     while True:
         passes += 1
         copies = []
         logging.info(f"{passes} pass of the game data - {passes - 0} copied data.")
         logging.debug(f"game data={[g.game_number for g in cleaned_data]}")
         for game in cleaned_data:
-            found_numbers = len([n for n in game.scratched_numbers if n in game.winning_numbers])
-            logging.debug(f"{game.game_number=} {found_numbers=}")
-            winners.append(game.game_number)
-            if found_numbers > 0:
-                for i in range(1, found_numbers + 1):
-                    copies.append(original[game.game_number + i - 1])
-                    logging.debug(f"copied number {game.game_number + i}")
-        cleaned_data = copy.deepcopy(copies)
+            winner, copiess = find_copies_in_data(game)
+            winners.extend(winner)
+            copies.extend(copiess)
+        cleaned_data = copies[:]
         if len(copies) == 0:
             count_winners = Counter(winners)
             logging.info(f"{count_winners=}")
