@@ -19,8 +19,8 @@ import logging
 import os
 from itertools import takewhile
 
-# mode = 'test'
-mode = 'production'
+mode = 'test'
+# mode = 'production'
 if mode == 'test':
     logging.basicConfig(encoding='utf-8', level=os.getenv("loglevel", logging.DEBUG))
 else:
@@ -33,13 +33,13 @@ with open(file_name) as f:
 dirty_seeds = data[0].strip("seeds :")
 seed_data = [int(i) for i in dirty_seeds.strip().split()]
 # TODO FIX
-seeds_pairs = [list(range(seed_data[index], seed_data[index] + seed_data[index + 1]))
+seeds_pairs = [range(seed_data[index], seed_data[index] + seed_data[index + 1])
                for index in range(0, len(seed_data), 2)]
-logging.debug(seeds_pairs)
+logging.info(seeds_pairs)
 seeds = []
 for s in seeds_pairs:
     seeds.extend(s)
-logging.debug(f"{seeds=}")
+logging.info(f"{seeds=}")
 if mode == 'test':
     assert len(seeds) == 27, f"{len(seeds)=} {seeds}"
 if mode == 'production':
@@ -60,7 +60,7 @@ class Mapping:
         self.range_length = int(self.range_length)
 
     def check_mapping(self, point):
-        return self.source_range_start + self.range_length > point > self.source_range_start
+        return self.source_range_start + self.range_length >= point >= self.source_range_start
 
     def map_source_to_destination(self, point: int):
         return self.destination_range_start + (point - self.source_range_start)
@@ -78,26 +78,11 @@ for element in [
     index = data.index(f"{element} map:")
     lines = takewhile(lambda line: line != '', data[index + 1:])
     cleaned_data[element] = [Mapping(*line.split()) for line in lines]
-    logging.debug(cleaned_data[element])
+    # logging.debug(cleaned_data[element])
 
 logging.debug(cleaned_data)
 
 locations = []
-
-# for seed in seeds:
-#     places = []
-#     for element in [
-#         "seed-to-soil",
-#         "soil-to-fertilizer",
-#         "fertilizer-to-water",
-#         "water-to-light",
-#         "light-to-temperature",
-#         "temperature-to-humidity",
-#         "humidity-to-location",
-#     ]:
-# places = [mapping.map_source_to_destination(place) for mapping in cleaned_data[element]
-#         for place in places if mapping.check_mapping(place)]
-# logging.debug(places)
 
 places = seeds[:]
 for element in [
@@ -116,7 +101,7 @@ for element in [
     for place in places:
         for mapping in cleaned_data[element]:
             logging.debug(
-                f"{mapping=} source={place}; is_mapped={mapping.check_mapping(place)}; destination={mapping.map_source_to_destination(place)} ")
+                f"{element=} source={place}; is_mapped={mapping.check_mapping(place)}; destination={mapping.map_source_to_destination(place)} ")
             if mapping.check_mapping(place):
                 destinations.append(mapping.map_source_to_destination(place))
                 break
@@ -124,7 +109,6 @@ for element in [
             destinations.append(place)
     logging.debug(f"{element=}{destinations}")
     places = copy.deepcopy(destinations)
-    logging.debug(f"{element=}{places}")
 
 if mode == 'test':
     min_locations = min(places)

@@ -128,7 +128,7 @@ class Mapping:
         self.range_length = int(self.range_length)
 
     def check_mapping(self, point):
-        return self.source_range_start + self.range_length > point > self.source_range_start
+        return self.source_range_start + self.range_length >= point >= self.source_range_start
 
     def map_source_to_destination(self, point: int):
         return self.destination_range_start + (point - self.source_range_start)
