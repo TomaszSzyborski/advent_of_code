@@ -88,12 +88,10 @@ class GoldenDataSet:
     data: tuple
 
 
-
-
-
 def solve_2():
     cleaned_data = clean_the_data(data)
     original: GoldenDataSet = GoldenDataSet(tuple(cleaned_data))
+    # todo use with reduce and recursion
 
     @functools.lru_cache()
     # @cache
@@ -103,22 +101,20 @@ def solve_2():
         winner = [game.game_number]
         copies = ()
         if found_numbers > 0:
-            copies = tuple([original.data[game.game_number + i - 1] for i in range(1, found_numbers + 1)])
-        return tuple(winner), tuple(copies)
+            copies = [original.data[game.game_number + i - 1] for i in range(1, found_numbers + 1)]
+        return winner, copies
 
     winners = []
     passes = 0
-    # todo use with reduce and recursion
-    # todo use cache function
     while True:
         passes += 1
         copies = []
         logging.info(f"{passes} pass of the game data - {passes - 0} copied data.")
         logging.debug(f"game data={[g.game_number for g in cleaned_data]}")
         for game in cleaned_data:
-            winner, copiess = find_copies_in_data(game)
+            winner, copies_in_data_set = find_copies_in_data(game)
             winners.extend(winner)
-            copies.extend(copiess)
+            copies.extend(copies_in_data_set)
         cleaned_data = copies[:]
         if len(copies) == 0:
             count_winners = Counter(winners)
