@@ -17,10 +17,11 @@ import copy
 import dataclasses
 import logging
 import os
+import sys
 from itertools import takewhile
 
-mode = 'test'
-# mode = 'production'
+# mode = 'test'
+mode = 'production'
 if mode == 'test':
     logging.basicConfig(encoding='utf-8', level=os.getenv("loglevel", logging.DEBUG))
 else:
@@ -32,17 +33,14 @@ with open(file_name) as f:
 
 dirty_seeds = data[0].strip("seeds :")
 seed_data = [int(i) for i in dirty_seeds.strip().split()]
-# TODO FIX
 seeds_pairs = [range(seed_data[index], seed_data[index] + seed_data[index + 1])
                for index in range(0, len(seed_data), 2)]
 logging.info(seeds_pairs)
-seeds = []
-for s in seeds_pairs:
-    seeds.extend(s)
-logging.info(f"{seeds=}")
 if mode == 'test':
-    assert len(seeds) == 27, f"{len(seeds)=} {seeds}"
-if mode == 'production':
+    seeds = []
+    for s in seeds_pairs:
+        seeds.extend(s)
+    logging.info(f"{seeds=}")
     assert len(seeds) == 27, f"{len(seeds)=} {seeds}"
 
 cleaned_data = {}
@@ -83,36 +81,40 @@ for element in [
 logging.debug(cleaned_data)
 
 locations = []
-
-places = seeds[:]
-for element in [
-    "seed-to-soil",
-    "soil-to-fertilizer",
-    "fertilizer-to-water",
-    "water-to-light",
-    "light-to-temperature",
-    "temperature-to-humidity",
-    "humidity-to-location",
-]:
-    # places = [mapping.check_mapping(place) for mapping in cleaned_data[element]
-    #         for place in places if mapping.check_mapping(place)]
-    # locations.extend(places)
-    destinations = []
-    for place in places:
-        for mapping in cleaned_data[element]:
-            logging.debug(
-                f"{element=} source={place}; is_mapped={mapping.check_mapping(place)}; destination={mapping.map_source_to_destination(place)} ")
-            if mapping.check_mapping(place):
-                destinations.append(mapping.map_source_to_destination(place))
-                break
-        else:
-            destinations.append(place)
-    logging.debug(f"{element=}{destinations}")
-    places = copy.deepcopy(destinations)
-
+min_destination = sys.maxsize
+for seed_range in seeds_pairs:
+    places = copy.deepcopy(seed_range)
+    logging.info(f"loop for {places}")
+    for seed in seed_range:
+        logging.debug(f"checking {seed=}")
+        for place in places:
+            source = place
+            for element in [
+                "seed-to-soil",
+                "soil-to-fertilizer",
+                "fertilizer-to-water",
+                "water-to-light",
+                "light-to-temperature",
+                "temperature-to-humidity",
+                "humidity-to-location",
+            ]:
+                destination = None
+                for mapping in cleaned_data[element]:
+                    logging.debug(
+                        f"{element=} source={source}; is_mapped={mapping.check_mapping(place)}; destination={mapping.map_source_to_destination(place)} ")
+                    if mapping.check_mapping(place):
+                        destination = mapping.map_source_to_destination(place)
+                        place = destination
+                        break
+                    else:
+                        destination = place
+                logging.debug(
+                    f"FINAL PLACEMENT {element=} {source=} {destination=}")
+                source = destination
+            if destination <= min_destination:
+                min_destination = destination
+            logging.debug(f"{min_destination=}")
 if mode == 'test':
-    min_locations = min(places)
-    assert min_locations == 46, f"{min_locations=}"
+    assert min_destination == 46, f"{min_destination=}"
 if mode == 'production':
-    min_locations = min(places)
-    assert min_locations == 825516882, f"{min_locations=}"
+    assert min_destination == 825516882, f"{min_destination=}"
