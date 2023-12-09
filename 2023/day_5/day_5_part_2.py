@@ -38,8 +38,8 @@ seeds_pairs = [range(seed_data[index], seed_data[index] + seed_data[index + 1])
 logging.info(seeds_pairs)
 if mode == 'test':
     seeds = []
-    for s in seeds_pairs:
-        seeds.extend(s)
+    for start_seed in seeds_pairs:
+        seeds.extend(start_seed)
     logging.info(f"{seeds=}")
     assert len(seeds) == 27, f"{len(seeds)=} {seeds}"
 
@@ -134,20 +134,20 @@ for block in blocks:
     for line in block.splitlines()[1:]:
         ranges.append(list(map(int, line.split())))
     new = []
-    while len(seeds) > 0:
-        s, e = seeds.pop()
-        for a, b, c in ranges:
-            os = max(s, b)
-            oe = min(e, b + c)
+    for seed in seeds:
+        start_seed, end_seed = seed
+        for destination_range_start, source_range_start, range_length in ranges:
+            os = max(start_seed, source_range_start)
+            oe = min(end_seed, source_range_start + range_length)
             if os < oe:
-                new.append((os - b + a, oe - b + a))
-                if os > s:
-                    seeds.append((s, os))
-                if e > oe:
-                    seeds.append((oe, e))
+                new.append((os - source_range_start + destination_range_start, oe - source_range_start + destination_range_start))
+                if os > start_seed:
+                    seeds.append((start_seed, os))
+                if end_seed > oe:
+                    seeds.append((oe, end_seed))
                 break
         else:
-            new.append((s, e))
+            new.append((start_seed, end_seed))
     seeds = new
 
 print(min(seeds)[0])
