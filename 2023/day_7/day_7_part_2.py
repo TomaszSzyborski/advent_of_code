@@ -74,22 +74,22 @@ else:
     logger.setLevel(logging.INFO)
 
 file_name = "test_input.txt" if mode == "test" else "puzzle_input.txt"
-CARDS = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2", "J"]
+CARDS = ["A", "K", "Q", "T", "9", "8", "7", "6", "5", "4", "3", "2", "J"]
 CARDS.reverse()
 CARDS = {card: index for index, card in enumerate(CARDS)}
-
 COMBINATIONS = ["Five of a kind", "Four of a kind", "Full house", "Three of a kind", "Two pairs", "One pair",
                 "High card", ][::-1]
 
-POWER_COMBINATIONS_MULTIPLIERS = {c: 100 ** power for power, c in enumerate(COMBINATIONS)}
+POWER_COMBINATIONS_MULTIPLIERS = {c: 100 * power for power, c in enumerate(COMBINATIONS)}
 
 
 @dataclasses.dataclass
 class Hand:
     cards: list[str]
     bid: int
-    strength: Counter = dataclasses.field(init=False, default=None)
+    strength: Counter = dataclasses.field(init=False, default=None, repr=False)
     raw_power: tuple[int] = dataclasses.field(init=False, default=None)
+    result: str = dataclasses.field(init=False, default=None)
 
     def __post_init__(self):
         self.bid = int(self.bid)
@@ -101,71 +101,122 @@ class Hand:
     def _calculate_hand_strength(self) -> tuple[int]:
         card_combinations = Counter(self.cards)
         power = 0
-        #TODO check if proper data input for matching
-        most_common = dict(card_combinations.most_common())
-        card_values = sorted(most_common.items(), key=lambda data: data[1] * 100 + CARDS[data[0]])
-        print(card_values)
-        #end_TODO
         count_jokers = self.cards.count("J")
-        if count_jokers:
-            print(f"{count_jokers=} {self.cards}")
+        # TODO check if proper data input for matching
+        # most_common = dict(card_combinations.most_common())
+        # card_values = sorted(most_common.items(), key=lambda data: data[1] * 100 + CARDS[data[0]], reverse=True)
+        # print(f"{self.cards=}")
+        # print(f"{card_values=}")
+        # match card_values:
         match card_combinations.most_common():
             # with jokers
-            case [(_, 4), ("J", 1)] | [(_, 3), ("J", 2)] | [("J", 3), (_, 2)]:
+            case [(_, 4), ("J", 1)] | \
+                 [(_, 3), ("J", 2)] | \
+                 [("J", 3), (_, 2)] | \
+                 [("J", 4), (_, 1)] | \
+                 [("J", 5)]:
                 power = POWER_COMBINATIONS_MULTIPLIERS["Five of a kind"]
+                self.result = "Five of a kind"
                 print(f"{count_jokers} {self.cards} five of a kind")
-            case [(_, 3), *rest, ("J", 1)] | [(_, 3), ("J", 1), *rest] | [(_, 2), ("J", 2), *rest]:
+            case [(_, 3), ("J", 1), _] | \
+                 [(_, 3), _, ("J", 1)] | \
+                 [(_, 2), ("J", 2), _] | \
+                 [("J", 2), (_, 2), _] | \
+                 [("J", 3), _, _]:
                 power = POWER_COMBINATIONS_MULTIPLIERS["Four of a kind"]
+                self.result = "Four of a kind"
                 print(f"{count_jokers} {self.cards} four of a kind")
             case [(_, 2), (_, 2), ("J", 1)]:
                 power = POWER_COMBINATIONS_MULTIPLIERS["Full house"]
+                self.result = "Full house"
                 print(f"{count_jokers} {self.cards} full house")
-            case [(_, 2), ("J", 1), *rest] | [(_, 2), *rest, ("J", 1)] \
-                 | [(_, 2), (_, 1), *rest, ("J", 1)] \
-                 | [(_, 2), *rest, (_, 1), ("J", 1)] \
-                 | [(_, 2), *rest, ("J", 1)]:
+            case [("J", 2), _, _, _] | \
+                 [(_, 2), ("J", 1), _, _] | \
+                 [(_, 2), _, ("J", 1), _] | \
+                 [(_, 2), _, _, ("J", 1)]:
                 power = POWER_COMBINATIONS_MULTIPLIERS["Three of a kind"]
+                self.result = "Three of a kind"
                 print(f"{count_jokers} {self.cards} three of a kind")
-            case [("J", 1), *rest]:
+            case [("J", 1), _, _, _, _] | \
+                 [_, ("J", 1), _, _, _] | \
+                 [_, _, ("J", 1), _, _] | \
+                 [_, _, _, ("J", 1), _] | \
+                 [_, _, _, _, ("J", 1)]:
                 power = POWER_COMBINATIONS_MULTIPLIERS["One pair"]
+                self.result = "One pair"
                 print(f"{count_jokers} {self.cards} one pair")
             # without jokers
             case [(_, 5)]:
                 power = POWER_COMBINATIONS_MULTIPLIERS["Five of a kind"]
+                self.result = "Five of a kind"
+                print(f"{count_jokers} {self.cards} five of a kind")
             case [(_, 4), (_, 1)]:
                 power = POWER_COMBINATIONS_MULTIPLIERS["Four of a kind"]
+                self.result = "Four of a kind"
+                print(f"{count_jokers} {self.cards} four of a kind")
             case [(_, 3), (_, 2)]:
                 power = POWER_COMBINATIONS_MULTIPLIERS["Full house"]
-            case [(_, 3), (_, 1), *rest]:
+                self.result = "Full house"
+                print(f"{count_jokers} {self.cards} full house")
+            case [(_, 3), (_, 1), _]:
                 power = POWER_COMBINATIONS_MULTIPLIERS["Three of a kind"]
-            case [(_, 2), (_, 2), *rest]:
+                self.result = "Three of a kind"
+                print(f"{count_jokers} {self.cards} three of a kind")
+            case [(_, 2), (_, 2), _]:
                 power = POWER_COMBINATIONS_MULTIPLIERS["Two pairs"]
-            case [(_, 2), (_, 1), *rest]:
+                self.result = "Two pairs"
+                print(f"{count_jokers} {self.cards} two pairs")
+            case [(_, 2), _, _, _]:
                 power = POWER_COMBINATIONS_MULTIPLIERS["One pair"]
-            case [(_, 1), *rest]:
+                self.result = "One pair"
+                print(f"{count_jokers} {self.cards} one pair")
+            case [(_, 1), _, _, _, _]:
                 power = POWER_COMBINATIONS_MULTIPLIERS["High card"]
+                self.result = "High card"
+                print(f"{count_jokers} {self.cards} high card")
 
         powers = [int(CARDS[card]) for card in self.cards]
+        # todo investigate following errors
+        # Hand(cards=['2', '3', '6', 'T', '9'], bid=677, result='High card')
+        # 677 * 1 = 677
+        # Hand(cards=['2', '3', 'A', '5', '7'], bid=652, result='High card')
+        # 652 * 2 = 1304
+        # Hand(cards=['2', '5', 'A', '8', '9'], bid=455, result='High card')
+        # 455 * 3 = 1365
         powers.insert(0, power)
         # print(f"{powers=}")
+        # print(100 * "=")
         return tuple(powers)
 
     def __gt__(self, other: Self):
+        # print(f"POWER COMPARISON {self.cards} {self.raw_power} > {other.cards} {other.raw_power} == {self.raw_power > other.raw_power}")
         return self.raw_power > other.raw_power
 
+    def __lt__(self, other):
+        return self.raw_power < other.raw_power
 
 with open(file_name) as f:
     hands = [Hand(*line.split()) for line in f.read().split('\n')]
 
 logger.debug(hands)
 logger.debug(sorted(hands))
+# print(hands)
+# print([h.raw_power for h in sorted(hands)])
 
-wins = []
 for rate, hand in enumerate(sorted(hands), start=1):
     logger.debug(f"{hand.bid} * {rate} = {hand.bid * rate}")
+    print(f"{hand}{hand.bid} * {rate} = {hand.bid * rate}")
 
 total_winnings = sum((hand.bid * rate for rate, hand in enumerate(sorted(hands), start=1)))
 if mode == 'test':
     assert total_winnings == 5905, total_winnings
 else:
-    assert total_winnings == 5905, total_winnings #250770445 too low
+    # assert total_winnings > 250770445
+    assert total_winnings < 251447133, total_winnings
+    assert total_winnings > 250814561, total_winnings
+    assert total_winnings != 250771039
+    assert total_winnings != 250798244
+    assert total_winnings == 250825971, total_winnings
+    # 250770445 is too low, 251447133 is too high, 250814561 is too low,
+    # 250771039 still wrong
+    # 250798244 still wrong
