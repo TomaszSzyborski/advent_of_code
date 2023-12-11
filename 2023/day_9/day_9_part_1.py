@@ -76,9 +76,9 @@ from itertools import takewhile, cycle
 from time import perf_counter
 from typing import Self
 
-mode = 'test'
+# mode = 'test'
 # mode = 'test2'
-# mode = 'production'
+mode = 'production'
 logging.basicConfig(encoding='utf-8')
 logger = logging.getLogger()
 if mode in ['test', 'test2']:
@@ -86,10 +86,59 @@ if mode in ['test', 'test2']:
 else:
     logger.setLevel(logging.INFO)
 
-file_name = ({"test": "test_input.txt.txt",
+file_name = ({"test": "test_input.txt",
               "test2": "test_input_2.txt"}
              .get(mode, "puzzle_input.txt"))
+
+
+@dataclasses.dataclass
+class History:
+    original_data: tuple[int]
+    tmp_history: list[int] = dataclasses.field(init=False, default_factory=list)
+    all_histories: list[list[int]] = dataclasses.field(init=False, default_factory=list)
+
+    def __post_init__(self):
+        self.tmp_history = list(copy.deepcopy(self.original_data))
+
+    def extrapolate(self):
+        self.all_histories.append(self.tmp_history)
+        logger.debug(self.tmp_history)
+        if all([t == 0 for t in self.tmp_history]):
+            # reversing histories from all zeroes to original as last element
+            self.tmp_history.append(0)
+            self.all_histories = self.all_histories[::-1]
+            return
+        self.tmp_history = [abs(self.tmp_history[i] - self.tmp_history[i + 1])
+                            for i, e in enumerate(self.tmp_history[:-1])]
+        # recursive extrapolation
+        self.extrapolate()
+
+
+with open(file_name) as f:
+    histories = [History(tuple([int(l.strip()) for l in line.split()])) for line in f.read().split('\n')]
+
+
+def find_number_of_the_difference(max_number: int, difference_result: int):
+    for number in range(max_number + max_number):
+        if number - max_number == difference_result:
+            return number
+
 result = 0
+for h in histories:
+    h.extrapolate()
+    logger.info(f"{h.all_histories=}")
+    bubbles = []
+    for i, inner_history in enumerate(h.all_histories[:-1], start=1):
+        difference_result = h.all_histories[i - 1][-1]
+        logger.debug(f"{difference_result=}")
+        earlier_last_number = h.all_histories[i][-1]
+        logger.debug(f"{earlier_last_number=}")
+        b = find_number_of_the_difference(earlier_last_number, difference_result)
+        h.all_histories[i].append(b)
+        bubbles.append(b)
+    logger.info(f"{bubbles=}")
+    result += bubbles[-1]
+
 if mode == 'test':
     assert result == 114, result
 else:
