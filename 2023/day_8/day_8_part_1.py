@@ -44,9 +44,9 @@ from itertools import takewhile, cycle
 from time import perf_counter
 from typing import Self
 
-# mode = 'test'
+mode = 'test'
 # mode = 'test2'
-mode = 'production'
+# mode = 'production'
 logging.basicConfig(encoding='utf-8')
 logger = logging.getLogger()
 if mode in ['test', 'test2']:
@@ -54,7 +54,7 @@ if mode in ['test', 'test2']:
 else:
     logger.setLevel(logging.INFO)
 
-file_name = ({"test": "test_input.txt",
+file_name = ({"test": "test_input.txt.txt",
               "test2": "test_input_2.txt"}
              .get(mode, "puzzle_input.txt"))
 

@@ -50,16 +50,17 @@ from time import perf_counter
 from typing import Self
 
 mode = 'test'
-# mode = 'production'
+# mode = 'test2'
+mode = 'production'
 logging.basicConfig(encoding='utf-8')
 logger = logging.getLogger()
-if mode in ['test', 'test2']:
-    logger.setLevel(logging.DEBUG)
-else:
-    logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
+# fh = logging.FileHandler('spam.log')
+# fh.setLevel(logging.DEBUG)
+# logger.addHandler(fh)
 
 file_name = ({"test": "part_2_test_input.txt",
-              }
+              "test2": "test_input_2.txt"}
              .get(mode, "puzzle_input.txt"))
 
 
@@ -93,26 +94,44 @@ for l in lines[2:]:
     source, mapping = l.split(" = ")
     mapping_data[source] = Mapping(*mapping.strip("()").split(", "))
 
-total_steps = 0
-
 logger.debug(mapping_data)
 current_places = {k: v for k, v in mapping_data.items() if str(k).endswith("A")}
+starting_places = {k: v for k, v in mapping_data.items() if str(k).endswith("A")}
+logger.info(f"{current_places}")
 logger.info(f"{len(current_places)=}")
 
-for move in cycle(moves):
-    if all([str(k).endswith("Z") for k, v in current_places.items()]):
-        break
-    # logger.debug(current_places)
-    new_items = {}
-    for source, mapping in current_places.items():
-        new_source = mapping_data[source][move]
-        new_items[new_source] = mapping_data[new_source]
-    logger.info(f"{len(new_items)=}")
-    current_places = new_items
-    total_steps += 1
+results = {}
 
+logger.debug(mapping_data)
+for current_place, mapping in starting_places.items():
+    sp = f"{current_place}"
+    total_steps = 0
+    for move in cycle(moves):
+        if str(current_place).endswith("Z"):
+            break
+        steps = mapping_data[current_place]
+        current_place = steps[move]
+        total_steps += 1
+    results[sp] = total_steps
+logger.info(results)
+
+
+def greatest_common_divisor(a, b):
+    if a == 0:
+        return b
+    return greatest_common_divisor(b % a, a)
+
+
+def lowest_common_multiplier(a, b):
+    return (a // greatest_common_divisor(a, b)) * b
+
+
+logger.info(results.values())
+result = reduce(lambda a, b: lowest_common_multiplier(a, b), results.values())
 if mode == 'test':
-    assert total_steps == 6, total_steps
+    assert result == 6, result
+elif mode == 'test2':
+    assert result == 6, result
 else:
-    #TODO find correct answer
-    assert total_steps == 6, total_steps
+    # TODO find correct answer
+    assert result == 11795205644011, result
