@@ -77,7 +77,6 @@ from time import perf_counter
 from typing import Self
 
 # mode = 'test'
-# mode = 'test2'
 mode = 'production'
 logging.basicConfig(encoding='utf-8')
 logger = logging.getLogger()
@@ -94,7 +93,7 @@ file_name = ({"test": "test_input.txt",
 @dataclasses.dataclass
 class History:
     original_data: tuple[int]
-    tmp_history: list[int] = dataclasses.field(init=False, default_factory=list)
+    tmp_history: list[int] = dataclasses.field(init=False, default_factory=list, repr=False)
     all_histories: list[list[int]] = dataclasses.field(init=False, default_factory=list)
 
     def __post_init__(self):
@@ -103,13 +102,14 @@ class History:
     def extrapolate(self):
         self.all_histories.append(self.tmp_history)
         logger.debug(self.tmp_history)
+        if len(self.tmp_history) == 1:
+            self.tmp_history.append(self.tmp_history[0])
         if all([t == 0 for t in self.tmp_history]):
             # reversing histories from all zeroes to original as last element
-            self.tmp_history.append(0)
             self.all_histories = self.all_histories[::-1]
             return
-        self.tmp_history = [abs(self.tmp_history[i] - self.tmp_history[i + 1])
-                            for i, e in enumerate(self.tmp_history[:-1])]
+        self.tmp_history = [self.tmp_history[i + 1] - self.tmp_history[i]
+                            for i, _ in enumerate(self.tmp_history[:-1])]
         # recursive extrapolation
         self.extrapolate()
 
@@ -118,28 +118,24 @@ with open(file_name) as f:
     histories = [History(tuple([int(l.strip()) for l in line.split()])) for line in f.read().split('\n')]
 
 
-def find_number_of_the_difference(max_number: int, difference_result: int):
-    for number in range(max_number + max_number):
-        if number - max_number == difference_result:
-            return number
-
 result = 0
 for h in histories:
+    logger.info(f"{h.original_data=}")
     h.extrapolate()
     logger.info(f"{h.all_histories=}")
-    bubbles = []
-    for i, inner_history in enumerate(h.all_histories[:-1], start=1):
-        difference_result = h.all_histories[i - 1][-1]
-        logger.debug(f"{difference_result=}")
-        earlier_last_number = h.all_histories[i][-1]
-        logger.debug(f"{earlier_last_number=}")
-        b = find_number_of_the_difference(earlier_last_number, difference_result)
-        h.all_histories[i].append(b)
-        bubbles.append(b)
-    logger.info(f"{bubbles=}")
-    result += bubbles[-1]
+    h.all_histories[0].append(0)
+    for i, _ in enumerate(h.all_histories[:-1], start=1):
+        last_previous = h.all_histories[i - 1][-1]
+        last_current = h.all_histories[i][-1]
+        missing_result = last_previous + last_current
+        h.all_histories[i].append(missing_result)
+    logger.info(f"new.{h.all_histories=}")
+    result += h.all_histories[-1][-1]
 
+logger.info(result)
 if mode == 'test':
     assert result == 114, result
 else:
-    assert result == 114, result
+    assert result < 1717345056, result #1717345056 is too high
+    assert result > 1344300445, result #1344300445 is too low
+    assert result == 1708206096, result
