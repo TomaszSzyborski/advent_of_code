@@ -48,48 +48,23 @@ def xmas_counter(data: [str]) -> int:
         for j in range(len(data[i])):
             forwards = backwards = upper_right = upper_left = up = down = lower_right = lower_left = ""
             print(f"Searched index {i}, {j}")
-            try:
-                # print("forwards:")
-                if j+4 < len(data[i]):
-                    forwards = data[i][j:j + 4]
-                # print(f"forwards: {forwards}")
-            except:
-                pass
-            try:
-                if j-3 >= 0 and j+1 < len(data[i]):
-                    backwards = data[i][j-3:j+1][::-1]
-            except:
-                pass
-            try:
-                if i-3 >= 0 and j+3 < len(data[i]):
-                    upper_right = data[i][j] + data[i -1][j + 1] + data[i - 2][j + 2] + data[i - 3][j + 3]
-            except:
-                pass
-            try:
-                if i-1 >= 0 and j-3>=0:
-                    upper_left = data[i][j] + data[i - 1][j - 1] + data[i - 2][j - 2] + data[i - 3][j - 3]
-            except:
-                pass
-            try:
-                if i-3 >= 0:
-                    up = data[i][j] + data[i - 1][j] + data[i - 2][j] + data[i - 3][j]
-            except:
-                pass
-            try:
+            if j+4 < len(data[i]):
+                forwards = data[i][j:j + 4]
+            if j-3 >= 0 and j+1 < len(data[i]):
+                backwards = data[i][j-3:j+1][::-1]
+            if i-3 >= 0 and j+3 < len(data[i]):
+                upper_right = data[i][j] + data[i -1][j + 1] + data[i - 2][j + 2] + data[i - 3][j + 3]
+            if i-1 >= 0 and j-3>=0:
+                upper_left = data[i][j] + data[i - 1][j - 1] + data[i - 2][j - 2] + data[i - 3][j - 3]
+            if i-3 >= 0:
+                up = data[i][j] + data[i - 1][j] + data[i - 2][j] + data[i - 3][j]
+            if i+3 < len(data):
                 down = data[i][j] + data[i + 1][j] + data[i + 2][j] + data[i + 3][j]
-            except:
-                pass
-            try:
-                if j+3 < len(data[i]) and i+3 < len(data):
-                    lower_right = data[i][j] + data[i + 1][j + 1] + data[i +  2][j + 2] + data[i +  3][j + 3]
-            except:
-                pass
-            try:
-                if j-3 >= 0 and i+3 < len(data):
-                    lower_left = data[i][j] + data[i + 1][j - 1] + data[i +  2][j - 2] + data[i +  3][j - 3]
-            except:
-                pass
-            counted = [forwards, backwards, upper_right, upper_left, up, down, lower_right, lower_left].count("XMAS")
+            if j+3 < len(data[i]) and i+3 < len(data):
+                lower_right = data[i][j] + data[i + 1][j + 1] + data[i +  2][j + 2] + data[i +  3][j + 3]
+            if j-3 >= 0 and i+3 < len(data):
+                lower_left = data[i][j] + data[i + 1][j - 1] + data[i +  2][j - 2] + data[i +  3][j - 3]
+
             print([f"{forwards=}",
                    f"{backwards=}",
                    f"{upper_right=}",
@@ -99,6 +74,7 @@ def xmas_counter(data: [str]) -> int:
                    f"{lower_right=}",
                    f"{lower_left=}",
                   ])
+            counted = [forwards, backwards, upper_right, upper_left, up, down, lower_right, lower_left].count("XMAS")
             count += counted
 
             print(count)
@@ -109,7 +85,7 @@ if __name__ == '__main__':
     with open("input.txt", "r") as file:
         data = file.read().split("\n")
 
-    print(xmas_counter(data))
+    print(f"{xmas_counter(data)=}")
 
 # 1131 too low
 # 2343 2nd attempt too low

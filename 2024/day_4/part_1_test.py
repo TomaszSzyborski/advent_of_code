@@ -39,14 +39,14 @@ S.S.S.S.SS
 Take a look at the little Elf's word search. How many times does XMAS appear?
 """
 from .part_1 import xmas_counter
-# def test_():
-#     with open("mmed_test_file.txt", "r") as file:
-#         data = file.read().split("\n")
-#     counted = xmas_counter(data)
-#     assert counted == 18
+def test_mmed():
+    with open("mmed_test_file_part_1.txt", "r") as file:
+        data = file.read().split("\n")
+    counted = xmas_counter(data)
+    assert counted == 18
 
-def test_2():
-    with open("dotted_test_file.txt", "r") as file:
+def test_dotted():
+    with open("dotted_test_file_part_1.txt", "r") as file:
         data = file.read().split("\n")
     counted = xmas_counter(data)
     assert counted == 18
