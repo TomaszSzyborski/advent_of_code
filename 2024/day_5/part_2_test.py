@@ -53,16 +53,16 @@ def test_reorder_updates(page_data):
     page_ordering_rules = [list(map(int, rule.split('|'))) for rule in page_data[0]]
 
     incorrect_updates = [
-        # [75,97,47,61,53],
-        # [61,13,29],
+        [75,97,47,61,53],
+        [61,13,29],
         [97,13,75,29,47]
     ]
 
     reordered = reorder_updates(ordering_rules=page_ordering_rules,
                                 pages=incorrect_updates)
     expected = [
-        # [97,75,47,61,53],
-        # [61,29,13],
+        [97,75,47,61,53],
+        [61,29,13],
         [97,75,47,29,13]
     ]
     assert reordered == expected
