@@ -1,3 +1,4 @@
+import json
 import logging
 from multiprocessing import Pool
 
@@ -89,135 +90,98 @@ It doesn't really matter what you choose to use as an obstacle so long as you an
 
 You need to get the guard stuck in a loop by adding a single new obstruction. How many different positions could you choose for this obstruction?
 """
-import copy
-
-class GuardBlockedException(Exception):
-    def __init__(self, visited_positions: list[list[tuple[int, int]]]) -> None:
-        super().__init__("Guard blocked!")
-        self.visited_positions = visited_positions
-
-MOVEMENT: dict[str, tuple[int, int]] = {
-    "^": (-1, 0),
-    ">": (0, 1),
-    "v": (1, 0),
-    "<": (0, -1)
-}
 
 
-def load_data(file_name: str) -> list[list[str]]:
-    with open(file_name, 'r') as file:
-        lines = file.read().split('\n')
-        data_map = [[char for char in line] for line in lines]
-    return data_map
+def parse(data: str):
+    data = data.splitlines()
+    obstacles = set()
+    start = None
+    for y, line in enumerate(data):
+        for x, char in enumerate(line):
+            if char == '#':
+                obstacles.add((x, y))
+            elif char == '^':
+                start = (x, y)
+    width = len(data[0])
+    height = len(data)
+    return obstacles, start, width, height
 
 
-def find_guard(map_input: list[list[str]]) -> tuple[int, int] | None:
-    for y in range(len(map_input)):
-        for x in range(len(map_input[y])):
-            if map_input[y][x] in MOVEMENT.keys():
-                return y, x
-    return None
+def get_guard_positions(obstacles, start, width, height):
+    visited = set()
+    x, y = start
+    direction = -1j
+
+    while 0 <= x < width and 0 <= y < height:
+        visited.add((x, y))
+        next_pos = (x + direction.real, y + direction.imag)
+        while next_pos in obstacles:
+            # turn right - toggle through 4 positions by multiplying by imaginary part
+            direction = direction * 1j
+            next_pos = (x + direction.real, y + direction.imag)
+        x, y = next_pos
+
+    return visited
+
+
+def is_loop(obstacles, start, width, height):
+    visited = set()
+    x, y = start
+    direction = -1j
+
+    while 0 <= x < width and 0 <= y < height:
+        if ((x, y), direction) in visited:
+            return True
+        visited.add(((x, y), direction))
+        next_pos = (x + direction.real, y + direction.imag)
+        while next_pos in obstacles:
+            # turn right
+            direction = direction * 1j
+            next_pos = (x + direction.real, y + direction.imag)
+        x, y = next_pos
+
+    return False
+
+
+def part1(obstacles, start, width, height):
+    return len(get_guard_positions(obstacles, start, width, height))
+
+
+def part2(obstacles, start, width, height):
+    guard_positions = get_guard_positions(obstacles, start, width, height)
+    guard_positions.remove(start)
+
+    good_positions = set()
+    i = 0
+    for position in guard_positions:
+        i += 1
+        if i % 100 == 0:
+            print(".", end="")
+        obstacles.add(position)
+        if is_loop(obstacles, start, width, height):
+            good_positions.add(position)
+        obstacles.remove(position)
+    print()
+
+    return len(good_positions)
 
 
 
-def move_guard(map_input: list[list[str]]) -> (list[str], tuple[int, int], str):
-    new_map = copy.deepcopy(map_input)
-    guard_position = find_guard(map_input)
-    guard_direction = new_map[guard_position[0]][guard_position[1]]
+with open("part_1_test_input.txt") as f:
+    data = f.read().strip()
+obstacles, start, width, height = parse(data)
+print('Part1:', part1(obstacles, start, width, height)) #41
+assert part1(obstacles, start, width, height) == 41
+print('Part2:', part2(obstacles, start, width, height))
+assert part2(obstacles, start, width, height) == 6
 
-    exiting_up = guard_position[0] == 0 and guard_direction == "^" and MOVEMENT[guard_direction][0] == -1
-    exiting_left = guard_position[1] == 0 and guard_direction == "<" and MOVEMENT[guard_direction][1] == -1
-    exiting_down = guard_position[0] == len(map_input) - 1 and guard_direction == "v" and MOVEMENT[guard_direction][0] == 1
-    exiting_right = guard_position[1] == len(map_input[0]) - 1 and guard_direction == ">" and MOVEMENT[guard_direction][1] == 1
-    if any([exiting_right, exiting_down, exiting_left, exiting_up]):
-        new_map[guard_position[0]][guard_position[1]] = "."
-        guard_position = find_guard(new_map)
-        return new_map, guard_position, guard_direction
+with open("puzzle_input.txt") as f:
+    data = f.read().strip()
+obstacles, start, width, height = parse(data)
+part_1_answer = part1(obstacles, start, width, height)
 
-    new_x = guard_position[0] + MOVEMENT[guard_direction][0]
-    new_y = guard_position[1] + MOVEMENT[guard_direction][1]
-
-
-    if new_map[new_x][new_y] == ".":
-        new_map[guard_position[0]][guard_position[1]] = "."
-        new_map[new_x][new_y] = guard_direction
-    elif new_map[new_x][new_y] in ["#", "O"]:
-        try:
-            guard_direction = list(MOVEMENT.keys())[list((MOVEMENT.keys())).index(guard_direction) + 1]
-        except IndexError:
-            guard_direction =  list(MOVEMENT.keys())[0]
-        new_map[guard_position[0]][guard_position[1]] = guard_direction
-    else:
-        pretty_map = '\n'.join([''.join(line) for line in new_map])
-        raise NotImplementedError(f"That shouldn't have happened - has my guard seen something unexpected>\n {pretty_map}")
-    guard_position = find_guard(new_map)
-    return new_map, guard_position, guard_direction
-
-def predict_route_size(map_input: list[list[str]]) -> tuple[int, list[list[tuple[int, int]]]]:
-    guard_position = find_guard(map_input)
-    positions_occupied = [[guard_position]]
-    unique_positions_occupied_length = 0
-
-    while find_guard(map_input) is not None:
-        previous_guard_direction = map_input[guard_position[0]][guard_position[1]]
-        map_input, guard_position, guard_direction = move_guard(map_input)
-        guard_position = find_guard(map_input)
-        if guard_position is None:
-            break
-        if guard_direction != previous_guard_direction:
-            positions_occupied.append([])
-        positions_occupied[-1].append(guard_position)
-        unique_positions_occupied_length = len(set(tuple([tuple(p) for p in positions_occupied])))
-
-        if len(positions_occupied) != unique_positions_occupied_length:
-            raise GuardBlockedException(positions_occupied)
-    return unique_positions_occupied_length, positions_occupied
-
-def put_obstacle(map_input: list[list[str]], position: tuple[int, int]) -> tuple[bool, list[list[str]]]:
-    new_map = copy.deepcopy(map_input)
-    changed = False
-    if new_map[position[0]][position[1]] == ".":
-        new_map[position[0]][position[1]] = "O"
-        changed = True
-    return changed, new_map
-
-def check_positions(positions, map_input):
-    blockades = 0
-    for number, position in enumerate(positions, start=1):
-        try:
-            changed, new_map = put_obstacle(map_input, position)
-            if changed:
-                predict_route_size(new_map)
-        except GuardBlockedException:
-            blockades += 1
-    return blockades
-
-
-def find_blockades(map_input: list[list[str]]) -> int:
-    """
-    This function takes a list of lists of strings representing a map and returns the number of possible blockades.
-    A blockade is a position on the map that, if an obstacle is placed there, will cause the guard to loop.
-
-    The function first calculates the number of unique positions that the guard visits in their normal patrol path.
-    Then, for each of the positions that the guard visits, it tries adding an obstacle at that position and checks if the guard becomes stuck in a loop.
-    If the guard does become stuck, then the position is counted as a blockade.
-
-    The function returns the total number of blockades found.
-    """
-    blockades = 0
-    unique_positions_occupied_length, positions_occupied = predict_route_size(map_input)
-    # positions = [s for p in positions_occupied for s in p[1:]]
-    # print(f"Searching potential {positions=}")
-
-    with Pool(8) as p:
-        results = p.starmap(check_positions, [(p, map_input) for p in positions_occupied])
-    return sum(results)
-
-def main():
-    file_name = "puzzle_input.txt"
-    data = load_data(file_name)
-    blockades = find_blockades(data)
-    print(blockades)
-
-if __name__ == '__main__':
-    main()
+print('Part1:', part_1_answer)
+assert part_1_answer == 5177, f"Expected 5177, got {part_1_answer}"
+part_2_answer = part2(obstacles, start, width, height)
+print('Part2:', part_2_answer)
+assert part_2_answer == 1686, f"Expected 1686, got {part_2_answer}"

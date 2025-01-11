@@ -437,8 +437,9 @@ def test_predict_route_open_up():
     ]
     map_input_open = [[char for char in line] for line in map_input_open]
 
-    expected_visited_positions = 2
-    assert predict_route_size(map_input_open) == (1 , expected_visited_positions)
+    expected_visited_positions =  [[(1, 1), (0, 1)]]
+    actual_steps, actual_visited_positions = predict_route_size(map_input_open)
+    assert  (actual_steps, actual_visited_positions) == (1 , expected_visited_positions)
 
 def test_predict_route_open_down():
     """
