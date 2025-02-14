@@ -97,6 +97,7 @@ from .part_1 import predict_route_size, find_guard, move_guard
 
 # find_guard tests
 
+
 def test_find_guard_facing_up():
     """
     Test the find_guard function when the guard is facing up.
@@ -115,7 +116,7 @@ def test_find_guard_facing_up():
         ".#..^.....",
         "........#.",
         "#.........",
-        "......#..."
+        "......#...",
     ]
     map_input = [[char for char in line] for line in map_input]
     assert find_guard(map_input) == (6, 4)
@@ -139,7 +140,7 @@ def test_find_guard_facing_right():
         ".#........",
         "........#.",
         "#......>..",
-        "......#..."
+        "......#...",
     ]
     map_input = [[char for char in line] for line in map_input]
 
@@ -164,7 +165,7 @@ def test_find_guard_facing_down():
         ".#........",
         "........#.",
         "#......v..",
-        "......#..."
+        "......#...",
     ]
     map_input = [[char for char in line] for line in map_input]
 
@@ -189,7 +190,7 @@ def test_find_guard_facing_left():
         ".#........",
         "........#.",
         "#......<..",
-        "......#..."
+        "......#...",
     ]
     map_input = [[char for char in line] for line in map_input]
     assert find_guard(map_input) == (8, 7)
@@ -212,7 +213,7 @@ def test_find_guard_when_no_guard():
         ".#........",
         "........#.",
         "#.........",
-        "......#..."
+        "......#...",
     ]
     map_input = [[char for char in line] for line in map_input]
 
@@ -226,11 +227,7 @@ def test_move_guard_when_guard_blocked():
     This test case checks if the move_guard function can correctly
     handle the situation when the guard is blocked by obstacles.
     """
-    map_input_blocked = [
-        "#####",
-        "#^###",
-        "#####"
-    ]
+    map_input_blocked = ["#####", "#^###", "#####"]
     map_input_blocked = [[char for char in line] for line in map_input_blocked]
     move_guard(map_input_blocked)
     move_guard(map_input_blocked)
@@ -255,7 +252,7 @@ def test_predict_route_size_happy_path():
         ".#..^.....",
         "........#.",
         "#.........",
-        "......#..."
+        "......#...",
     ]
     map_input = [[char for char in line] for line in map_input]
     expected_visited_positions = 41
@@ -270,11 +267,7 @@ def test_predict_route_blocked():
     predict the route of the guard in the map input when the guard is
     blocked by obstacles.
     """
-    map_input_blocked = [
-        "#####",
-        "#^###",
-        "#####"
-    ]
+    map_input_blocked = ["#####", "#^###", "#####"]
     map_input_blocked = [[char for char in line] for line in map_input_blocked]
     expected_error_message = "Guard blocked"
     with pytest.raises(Exception) as e_info:
@@ -290,15 +283,12 @@ def test_predict_route_open_up():
     predict the route of the guard in the map input when the guard is
     facing up and has an open path above.
     """
-    map_input_open = [
-        "..........",
-        ".^........",
-        ".........."
-    ]
+    map_input_open = ["..........", ".^........", ".........."]
     map_input_open = [[char for char in line] for line in map_input_open]
 
     expected_visited_positions = 2
     assert predict_route_size(map_input_open) == expected_visited_positions
+
 
 def test_predict_route_open_down():
     """
@@ -308,15 +298,12 @@ def test_predict_route_open_down():
     predict the route of the guard in the map input when the guard is
     facing down and has an open path below.
     """
-    map_input_open = [
-        "..........",
-        ".v........",
-        ".........."
-    ]
+    map_input_open = ["..........", ".v........", ".........."]
     map_input_open = [[char for char in line] for line in map_input_open]
     expected_visited_positions = 2
 
     assert predict_route_size(map_input_open) == expected_visited_positions
+
 
 def test_predict_route_open_left():
     """
@@ -326,11 +313,7 @@ def test_predict_route_open_left():
     predict the route of the guard in the map input when the guard is
     facing left and has an open path left.
     """
-    map_input_open = [
-        "..........",
-        "..<.......",
-        ".........."
-    ]
+    map_input_open = ["..........", "..<.......", ".........."]
     map_input_open = [[char for char in line] for line in map_input_open]
     expected_visited_positions = 3
 
@@ -345,16 +328,11 @@ def test_predict_route_open_right():
     predict the route of the guard in the map input when the guard is
     facing right and has an open path to the right.
     """
-    map_input_open = [
-        "..........",
-        "..>.......",
-        ".........."
-    ]
+    map_input_open = ["..........", "..>.......", ".........."]
     map_input_open = [[char for char in line] for line in map_input_open]
 
     expected_visited_positions = 8
     assert predict_route_size(map_input_open) == expected_visited_positions
-
 
 
 # move_guard tests
@@ -366,17 +344,14 @@ def test_move_guard():
     move the guard in the map input based on the guard's position and
     the direction given.
     """
-    map_input = [
-        "..........",
-        "..^.......",
-        ".........."
-    ]
+    map_input = ["..........", "..^.......", ".........."]
     map_input = [[char for char in line] for line in map_input]
 
     expected_guard_position = (0, 2)
     new_map, guard_position, guard_direction = move_guard(map_input)
     assert guard_position == expected_guard_position
     assert guard_direction == "^"
+
 
 def test_move_guard_blocked():
     """
@@ -386,11 +361,7 @@ def test_move_guard_blocked():
     handle the case where the guard is blocked by checking if the
     guard's position is the same before and after calling the function.
     """
-    map_input_blocked = [
-        "##########",
-        "#.^......#",
-        "##########"
-    ]
+    map_input_blocked = ["##########", "#.^......#", "##########"]
     map_input_blocked = [[char for char in line] for line in map_input_blocked]
     new_map, guard_position, guard_direction = move_guard(map_input_blocked)
     assert guard_position == (1, 2)
@@ -405,11 +376,7 @@ def test_guard_turns_when_facing_up():
     move the guard in the map input based on the guard's position and
     the direction given.
     """
-    map_input = [
-        "..#.......",
-        "..^.......",
-        ".........."
-    ]
+    map_input = ["..#.......", "..^.......", ".........."]
     map_input = [[char for char in line] for line in map_input]
 
     expected_guard_position = (1, 2)
@@ -421,6 +388,7 @@ def test_guard_turns_when_facing_up():
     assert guard_position == expected_guard_position
     assert guard_direction == ">"
 
+
 def test_guard_turns_when_facing_right():
     """
     Test the move_guard function.
@@ -429,11 +397,7 @@ def test_guard_turns_when_facing_right():
     move the guard in the map input based on the guard's position and
     the direction given.
     """
-    map_input = [
-        "..#.......",
-        "..>#......",
-        ".........."
-    ]
+    map_input = ["..#.......", "..>#......", ".........."]
     map_input = [[char for char in line] for line in map_input]
 
     expected_guard_position = (1, 2)
@@ -444,6 +408,8 @@ def test_guard_turns_when_facing_right():
     new_map, guard_position, guard_direction = move_guard(new_map)
     assert guard_position == expected_guard_position
     assert guard_direction == "v"
+
+
 def test_guard_turns_when_facing_down():
     """
     Test the move_guard function.
@@ -452,11 +418,7 @@ def test_guard_turns_when_facing_down():
     move the guard in the map input based on the guard's position and
     the direction given.
     """
-    map_input = [
-        "..#.......",
-        "..v.......",
-        "..#......."
-    ]
+    map_input = ["..#.......", "..v.......", "..#......."]
     map_input = [[char for char in line] for line in map_input]
 
     expected_guard_position = (1, 2)
@@ -468,6 +430,7 @@ def test_guard_turns_when_facing_down():
     assert guard_position == expected_guard_position
     assert guard_direction == "<"
 
+
 def test_guard_turns_when_facing_left():
     """
     Test the move_guard function.
@@ -476,11 +439,7 @@ def test_guard_turns_when_facing_left():
     move the guard in the map input based on the guard's position and
     the direction given.
     """
-    map_input = [
-        "..........",
-        ".#<.......",
-        "..#......."
-    ]
+    map_input = ["..........", ".#<.......", "..#......."]
     map_input = [[char for char in line] for line in map_input]
 
     expected_guard_position = (1, 2)
@@ -491,6 +450,7 @@ def test_guard_turns_when_facing_left():
     new_map, guard_position, guard_direction = move_guard(new_map)
     assert guard_position == expected_guard_position
     assert guard_direction == "^"
+
 
 if __name__ == "__main__":
     pytest.main()

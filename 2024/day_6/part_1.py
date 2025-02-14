@@ -97,6 +97,7 @@ In this example, the guard will visit 41 distinct positions on your map.
 
 Predict the path of the guard. How many distinct positions will the guard visit before leaving the mapped area?
 """
+
 import copy
 import dataclasses
 
@@ -105,12 +106,13 @@ MOVEMENT: dict[str, tuple[int, int]] = {
     "^": (-1, 0),
     ">": (0, 1),
     "v": (1, 0),
-    "<": (0, -1)
+    "<": (0, -1),
 }
 
+
 def load_data(file_name: str) -> list[list[str]]:
-    with open(file_name, 'r') as file:
-        lines = file.read().split('\n')
+    with open(file_name, "r") as file:
+        lines = file.read().split("\n")
         data_map = [[char for char in line] for line in lines]
     return data_map
 
@@ -122,15 +124,32 @@ def find_guard(map_input: list[list[str]]) -> tuple[int, int] | None:
                 return y, x
     return None
 
+
 def move_guard(map_input: list[list[str]]) -> (list[str], tuple[int, int], str):
     new_map = copy.deepcopy(map_input)
     guard_position = find_guard(map_input)
     guard_direction = new_map[guard_position[0]][guard_position[1]]
 
-    exiting_up = guard_position[0] == 0 and guard_direction == "^" and MOVEMENT[guard_direction][0] == -1
-    exiting_left =guard_position[1] == 0 and guard_direction == "<" and MOVEMENT[guard_direction][1] == -1
-    exiting_down = guard_position[0] == len(map_input) - 1 and guard_direction == "v" and MOVEMENT[guard_direction][0] == 1
-    exiting_right = guard_position[1] == len(map_input[0]) - 1 and guard_direction == ">" and MOVEMENT[guard_direction][1] == 1
+    exiting_up = (
+        guard_position[0] == 0
+        and guard_direction == "^"
+        and MOVEMENT[guard_direction][0] == -1
+    )
+    exiting_left = (
+        guard_position[1] == 0
+        and guard_direction == "<"
+        and MOVEMENT[guard_direction][1] == -1
+    )
+    exiting_down = (
+        guard_position[0] == len(map_input) - 1
+        and guard_direction == "v"
+        and MOVEMENT[guard_direction][0] == 1
+    )
+    exiting_right = (
+        guard_position[1] == len(map_input[0]) - 1
+        and guard_direction == ">"
+        and MOVEMENT[guard_direction][1] == 1
+    )
     if any([exiting_right, exiting_down, exiting_left, exiting_up]):
         new_map[guard_position[0]][guard_position[1]] = "."
         guard_position = find_guard(new_map)
@@ -139,15 +158,16 @@ def move_guard(map_input: list[list[str]]) -> (list[str], tuple[int, int], str):
     new_x = guard_position[0] + MOVEMENT[guard_direction][0]
     new_y = guard_position[1] + MOVEMENT[guard_direction][1]
 
-
     if new_map[new_x][new_y] == ".":
         new_map[guard_position[0]][guard_position[1]] = "."
         new_map[new_x][new_y] = guard_direction
     elif new_map[new_x][new_y] == "#":
         try:
-            guard_direction = list(MOVEMENT.keys())[list((MOVEMENT.keys())).index(guard_direction) + 1]
+            guard_direction = list(MOVEMENT.keys())[
+                list((MOVEMENT.keys())).index(guard_direction) + 1
+            ]
         except IndexError:
-            guard_direction =  list(MOVEMENT.keys())[0]
+            guard_direction = list(MOVEMENT.keys())[0]
         new_map[guard_position[0]][guard_position[1]] = guard_direction
     else:
         raise NotImplementedError("That shouldn't happen...")
@@ -168,12 +188,14 @@ def predict_route_size(map_input: list[list[str]]) -> int:
             raise Exception("Guard blocked")
     return len(set(positions_occupied))
 
+
 def main():
     file_name = "puzzle_input.txt"
     data = load_data(file_name)
     result = predict_route_size(data)
     print(result)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
-    #first attempt 5177
+    # first attempt 5177

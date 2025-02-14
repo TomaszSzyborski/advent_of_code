@@ -98,9 +98,9 @@ def parse(data: str):
     start = None
     for y, line in enumerate(data):
         for x, char in enumerate(line):
-            if char == '#':
+            if char == "#":
                 obstacles.add((x, y))
-            elif char == '^':
+            elif char == "^":
                 start = (x, y)
     width = len(data[0])
     height = len(data)
@@ -166,13 +166,12 @@ def part2(obstacles, start, width, height):
     return len(good_positions)
 
 
-
 with open("part_1_test_input.txt") as f:
     data = f.read().strip()
 obstacles, start, width, height = parse(data)
-print('Part1:', part1(obstacles, start, width, height)) #41
+print("Part1:", part1(obstacles, start, width, height))  # 41
 assert part1(obstacles, start, width, height) == 41
-print('Part2:', part2(obstacles, start, width, height))
+print("Part2:", part2(obstacles, start, width, height))
 assert part2(obstacles, start, width, height) == 6
 
 with open("puzzle_input.txt") as f:
@@ -180,8 +179,8 @@ with open("puzzle_input.txt") as f:
 obstacles, start, width, height = parse(data)
 part_1_answer = part1(obstacles, start, width, height)
 
-print('Part1:', part_1_answer)
+print("Part1:", part_1_answer)
 assert part_1_answer == 5177, f"Expected 5177, got {part_1_answer}"
 part_2_answer = part2(obstacles, start, width, height)
-print('Part2:', part_2_answer)
+print("Part2:", part_2_answer)
 assert part_2_answer == 1686, f"Expected 1686, got {part_2_answer}"

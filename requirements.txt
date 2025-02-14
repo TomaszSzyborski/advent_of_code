@@ -1,2 +1,4 @@
 more-itertools==9.0.0
 pytest
+ruff==0.9.6
+uv==0.5.31
